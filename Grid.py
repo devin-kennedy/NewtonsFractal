@@ -1,5 +1,5 @@
 import math
-from math import e, pi, cos, sin
+from math import e, pi, cos, sin, sqrt
 
 import numpy as np
 import PIL.Image as img
@@ -16,44 +16,54 @@ class Grid:
         self.grid = xs[:, None] + 1j * ys
 
         # CUBIC
-        self.z0 = 1
-        self.z1 = -0.5+np.sqrt(3) * 1j/2
-        self.z2 = -0.5-np.sqrt(3) * 1j/2
-        self.roots = [self.z0, self.z1, self.z2]
+        # self.z0 = 1
+        # self.z1 = -0.5+np.sqrt(3) * 1j/2
+        # self.z2 = -0.5-np.sqrt(3) * 1j/2
+        # self.roots = [self.z0, self.z1, self.z2]
 
         # QUARTIC
-        self.z0 = 1
-        self.z1 = -1
-        self.z2 = -1j
-        self.z3 = 1j
-        self.roots = [self.z0, self.z1, self.z2, self.z3]
+        # self.z0 = 1
+        # self.z1 = -1
+        # self.z2 = -1j
+        # self.z3 = 1j
+        # self.roots = [self.z0, self.z1, self.z2, self.z3]
 
         # QUINTIC
-        self.z0 = 1
-        self.z1 = (-1 / 4) - (math.sqrt(5) / 4) - (1j * math.sqrt((5 / 8) - (math.sqrt(5) / 8)))
-        self.z2 = (-1 / 4) + (math.sqrt(5) / 4) + (1j * math.sqrt((5 / 8) + (math.sqrt(5) / 8)))
-        self.z3 = (-1 / 4) + (math.sqrt(5) / 4) - (1j * math.sqrt((5 / 8) + (math.sqrt(5) / 8)))
-        self.z4 = (-1 / 4) - (math.sqrt(5) / 4) + (1j * math.sqrt((5 / 8) - (math.sqrt(5) / 8)))
-        self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4]
+        # self.z0 = 1
+        # self.z1 = (-1 / 4) - (math.sqrt(5) / 4) - (1j * math.sqrt((5 / 8) - (math.sqrt(5) / 8)))
+        # self.z2 = (-1 / 4) + (math.sqrt(5) / 4) + (1j * math.sqrt((5 / 8) + (math.sqrt(5) / 8)))
+        # self.z3 = (-1 / 4) + (math.sqrt(5) / 4) - (1j * math.sqrt((5 / 8) + (math.sqrt(5) / 8)))
+        # self.z4 = (-1 / 4) - (math.sqrt(5) / 4) + (1j * math.sqrt((5 / 8) - (math.sqrt(5) / 8)))
+        # self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4]
 
         # P(z) = z^8 + 15z^4 - 16
-        self.z0 = 1
-        self.z1 = -1
-        self.z2 = 1j
-        self.z3 = -1j
-        self.z4 = (-1-1j)*math.sqrt(2)
-        self.z5 = (1+1j)*math.sqrt(2)
-        self.z6 = (1-1j)*math.sqrt(2)
-        self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5, self.z6]
+        # self.z0 = 1
+        # self.z1 = -1
+        # self.z2 = 1j
+        # self.z3 = -1j
+        # self.z4 = (-1-1j)*math.sqrt(2)
+        # self.z5 = (1+1j)*math.sqrt(2)
+        # self.z6 = (1-1j)*math.sqrt(2)
+        # self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5, self.z6]
 
         # P(z) = z^(4+3i)-1
-        self.z0 = 1
-        self.z1 = (e**(-(18 * pi) / 25)) * (e**(-(24j * pi) / 25))
-        self.z2 = (e**(-(12 * pi) / 25)) * (e**(-(16j * pi) / 25))
-        self.z3 = (e**(-(6 * pi) / 25)) * (e**(-(8j * pi) / 25))
-        self.z4 = (e**((6 * pi) / 25)) * (e**((8j * pi) / 25))
-        self.z5 = (e**((12 * pi) / 25)) * (e**((16j * pi) / 25))
-        self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5]
+        # self.z0 = 1
+        # self.z1 = (e**(-(18 * pi) / 25)) * (e**(-(24j * pi) / 25))
+        # self.z2 = (e**(-(12 * pi) / 25)) * (e**(-(16j * pi) / 25))
+        # self.z3 = (e**(-(6 * pi) / 25)) * (e**(-(8j * pi) / 25))
+        # self.z4 = (e**((6 * pi) / 25)) * (e**((8j * pi) / 25))
+        # self.z5 = (e**((12 * pi) / 25)) * (e**((16j * pi) / 25))
+        # self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5]
+
+        # P(z) = z^10 - 1
+        self.z0 = -1
+        self.z1 = 1
+        self.z2 = -(1 / 4) - (sqrt(5) / 4) - (1j * sqrt((5 / 8) - (sqrt(5) / 8)))
+        self.z3 = (1 / 4) + (sqrt(5) / 4) + (1j * sqrt((5 / 8) - (sqrt(5) / 8)))
+        self.z4 = (1 / 4) - (sqrt(5) / 4) - (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
+        self.z5 = -(1 / 4) + (sqrt(5) / 4) + (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
+        self.z6 = -(1 / 4) + (sqrt(5) / 4) - (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
+        self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5, self.z6]
 
         self.res = res
         self.newton_state = False
@@ -85,16 +95,16 @@ class Grid:
         return 5*x**4
 
     def f_other(self, x):
-        return x**(4 + (3 * 1j)) - 1
+        return x**10 - 1
 
     def fprime_other(self, x):
-        return (4 + (3 * 1j)) * x**(3 + (3 * 1j))
+        return 10 * x**9
 
-    def newton(self, x):
-        return x - self.f_other(x) / self.fprime_other(x)
+    def newton(self, x, a=1):
+        return x - (a * (self.f_other(x) / self.fprime_other(x)))
 
     def newton_iter(self):
-        for i in range(200):
+        for i in range(1000):
             self.grid = self.newton(self.grid)
         self.newton_state = True
 
@@ -129,6 +139,8 @@ class Grid:
             out = colors[4]
         elif np.isclose(self.grid[i, j], self.z5):
             out = (200, 200, 200)
+        elif np.isclose(self.grid[i, j], self.z6):
+            out = (100, 0, 255)
         else:
             out = (0, 0, 0)
         return out

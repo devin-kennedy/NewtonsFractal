@@ -2,7 +2,7 @@ from Grid import Grid
 
 
 def main():
-    grid = Grid(-2, 2, -2, 2, (800, 800))
+    grid = Grid(-2, 2, -2, 2, (1080, 1080))
     grid.newton_iter()
     grid.gen_image()
 
