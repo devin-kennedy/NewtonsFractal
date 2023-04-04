@@ -4,6 +4,9 @@ from math import e, pi, cos, sin, sqrt
 import numpy as np
 import PIL.Image as img
 import random
+from functools import cache
+from utils import *
+import threading
 
 
 class Grid:
@@ -14,12 +17,13 @@ class Grid:
         ys = np.linspace(ymin, ymax, res[1])
 
         self.grid = xs[:, None] + 1j * ys
+        self.threadData = {}
 
         # CUBIC
-        # self.z0 = 1
-        # self.z1 = -0.5+np.sqrt(3) * 1j/2
-        # self.z2 = -0.5-np.sqrt(3) * 1j/2
-        # self.roots = [self.z0, self.z1, self.z2]
+        self.z0 = 1
+        self.z1 = -0.5+np.sqrt(3) * 1j/2
+        self.z2 = -0.5-np.sqrt(3) * 1j/2
+        self.roots = [self.z0, self.z1, self.z2]
 
         # QUARTIC
         # self.z0 = 1
@@ -56,14 +60,14 @@ class Grid:
         # self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5]
 
         # P(z) = z^10 - 1
-        self.z0 = -1
-        self.z1 = 1
-        self.z2 = -(1 / 4) - (sqrt(5) / 4) - (1j * sqrt((5 / 8) - (sqrt(5) / 8)))
-        self.z3 = (1 / 4) + (sqrt(5) / 4) + (1j * sqrt((5 / 8) - (sqrt(5) / 8)))
-        self.z4 = (1 / 4) - (sqrt(5) / 4) - (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
-        self.z5 = -(1 / 4) + (sqrt(5) / 4) + (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
-        self.z6 = -(1 / 4) + (sqrt(5) / 4) - (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
-        self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5, self.z6]
+        # self.z0 = -1
+        # self.z1 = 1
+        # self.z2 = -(1 / 4) - (sqrt(5) / 4) - (1j * sqrt((5 / 8) - (sqrt(5) / 8)))
+        # self.z3 = (1 / 4) + (sqrt(5) / 4) + (1j * sqrt((5 / 8) - (sqrt(5) / 8)))
+        # self.z4 = (1 / 4) - (sqrt(5) / 4) - (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
+        # self.z5 = -(1 / 4) + (sqrt(5) / 4) + (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
+        # self.z6 = -(1 / 4) + (sqrt(5) / 4) - (1j * sqrt((5 / 8) + (sqrt(5) / 8)))
+        # self.roots = [self.z0, self.z1, self.z2, self.z3, self.z4, self.z5, self.z6]
 
         self.res = res
         self.newton_state = False
@@ -77,10 +81,10 @@ class Grid:
             raise ValueError("All args must be integers")
 
     def f_cubic(self, x):
-        return x**3-1
+        return power(x, (3-1))
 
     def fprime_cubic(self, x):
-        return 3*x**2
+        return 3 * power(x, 2)
 
     def f_quartic(self, x):
         return x**4-1
@@ -101,11 +105,21 @@ class Grid:
         return 10 * x**9
 
     def newton(self, x, a=1):
-        return x - (a * (self.f_other(x) / self.fprime_other(x)))
+        return x - (a * (self.f_cubic(x) / self.fprime_cubic(x)))
 
     def newton_iter(self):
-        for i in range(1000):
+        unchanged = 0
+        for i in range(200):
+            lastGrid = self.grid.copy()
             self.grid = self.newton(self.grid)
+
+            if np.isclose(lastGrid.all(), self.grid.all()):
+                unchanged += 1
+            elif unchanged != 0:
+                unchanged = 0
+            if unchanged == 5:
+                break
+
         self.newton_state = True
 
     def darken(self, color_a, t):
@@ -116,16 +130,34 @@ class Grid:
         px = im.load()
 
         if not self.newton_state:
+            print("\nBeginning Newton iter")
             self.newton_iter()
 
-        for i in range(self.res[0]):
-            for j in range(self.res[1]):
-                px[i, j] = self.color_classification(i, j)
+        print("Beginning color classification")
 
-        im.save("out.png")
+        numThreads = 3
+        threads = []
+        splitRangesI = list(split_range(range(self.res[0]), numThreads))
+        splitRangesJ = list(split_range(range(self.res[1]), numThreads))
+
+        for i in range(numThreads):
+            self.color_classify_batch(i, splitRangesI[i], splitRangesJ[i])
+
+        for batch_ind in range(numThreads):
+            toWrite = self.threadData[batch_ind]
+            for i in splitRangesI[batch_ind]:
+                for j in splitRangesJ[batch_ind]:
+                    px[i, j] = tuple(toWrite[i, j])
+
+        # for i in range(self.res[0]):
+        #     for j in range(self.res[1]):
+        #         px[i, j] = self.color_classification(i, j)
+
+        #im.save("out.png")
+        return im
 
     def color_classification(self, i, j):
-        colors = [(252, 231, 98), (209, 73, 91), (27, 231, 255), (187, 182, 223), (83, 134, 228)]
+        colors = [[252, 231, 98], [209, 73, 91], [27, 231, 255], [187, 182, 223], [83, 134, 228]]
 
         if np.isclose(self.grid[i, j], self.z0):
             out = colors[0]
@@ -133,14 +165,22 @@ class Grid:
             out = colors[1]
         elif np.isclose(self.grid[i, j], self.z2):
             out = colors[2]
-        elif np.isclose(self.grid[i, j], self.z3):
-            out = colors[3]
-        elif np.isclose(self.grid[i, j], self.z4):
-            out = colors[4]
-        elif np.isclose(self.grid[i, j], self.z5):
-            out = (200, 200, 200)
-        elif np.isclose(self.grid[i, j], self.z6):
-            out = (100, 0, 255)
+        # elif np.isclose(self.grid[i, j], self.z3):
+        #     out = colors[3]
+        # elif np.isclose(self.grid[i, j], self.z4):
+        #     out = colors[4]
+        # elif np.isclose(self.grid[i, j], self.z5):
+        #     out = (200, 200, 200)
+        # elif np.isclose(self.grid[i, j], self.z6):
+        #     out = (100, 0, 255)
         else:
-            out = (0, 0, 0)
+            out = [0, 0, 0]
         return out
+
+    def color_classify_batch(self, ind, rngeI, rngeJ):
+        results = np.zeros(self.res, dtype=list)
+        for i in rngeI:
+            for j in rngeJ:
+                print(i, j)
+                results[i][j] = self.color_classification(i, j)
+        self.threadData[ind] = results
