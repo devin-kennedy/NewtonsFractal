@@ -1,0 +1,3 @@
+# NewtonsFractal
+Newton method
+Fractal
